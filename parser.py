@@ -2,6 +2,7 @@ import requests.models
 import lxml.html
 from requests import get
 from time import sleep
+from api_vk import MyVkApi
 
 # User-agent - необходимый в запросе заголовок для работы парсера
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
@@ -12,10 +13,11 @@ class MyHHParser:
     Класс парсера.
     Организует бесконечный цикл получения необходимой информации.
     """
-    def __init__(self, url: str, delay: int):
+    def __init__(self, url: str, delay: int, vk: MyVkApi):
         self.url = url
         self.delay = delay
         self.user_agent = USER_AGENT
+        self.vk = vk
 
     @staticmethod
     def get_response(url: str, *args, **kwargs):  # Возвращает ответ от запроса по указанному url
@@ -39,7 +41,7 @@ class MyHHParser:
             response = self.get_response(self.url, headers={'user-agent': self.user_agent})
             html_t = self.get_html(response)
             tree = self.get_tree(html_t)
-            print(self.get_results_number(tree))
+            self.vk.send_message(self.get_results_number(tree))
             sleep(self.delay)
 
 
