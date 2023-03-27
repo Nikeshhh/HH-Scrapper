@@ -39,20 +39,27 @@ class MyHHParser:
         path_to_num = '//*[@id="HH-React-Root"]/div/div[3]/div[1]/div/div[1]/div[1]/div/h1/text()[1]'
         return p_tree.xpath(path_to_num)[0]
 
+    @staticmethod
+    def get_salary(vac_id: int, p_tree: lxml.html.HtmlElement) -> str:
+        path_to_elem = '//*[@id="a11y-main-content"]/div' + f'[{vac_id}]'
+        path_to_salary = '/div/div[1]/div/div[3]/span/text()'
+        alt_path_to_salary = '/div/div[1]/div[1]/div[1]/span/text()'
+        salary = p_tree.xpath(f'{path_to_elem}{path_to_salary}')
+        if not salary:
+            salary = p_tree.xpath(f'{path_to_elem}{alt_path_to_salary}')
+        return salary
+
     def get_vacancy_info(self, vac_id: int, p_tree: lxml.html.HtmlElement) -> list:
         path_to_elem = '//*[@id="a11y-main-content"]/div' + f'[{vac_id}]'
         path_to_vac_name = '/div/div[1]/div[1]/div[1]/h3/span/a/text()'
         path_to_vac_if_online = '/div/div[1]/div[1]/div[3]/h3/span/a/text()'
-        path_to_salary = '/div/div[1]/div/div[3]/span/text()[1]'
+        path_to_salary = '/div/div[1]/div/div[3]/span/text()'
         path_to_employer = '/div/div[1]/div[1]/div[2]/div[1]/div[1]/div/div[1]/a/text()'
         path_to_employer_if_online = '/div/div[1]/div/div[4]/div/div[1]/div/div[1]/a/text()'
 
         name = p_tree.xpath(f'{path_to_elem}{path_to_vac_name}')
-        salary = p_tree.xpath(f'{path_to_elem}{path_to_salary}')
+        salary = self.get_salary(vac_id, p_tree)
         employer = p_tree.xpath(f'{path_to_elem}{path_to_employer}')
-        if salary:  # Если зарплата указана, то убираем из нее лишние символы юникода
-            # TODO: существует большее количество случаев разметки зарплаты
-            salary = p_tree.xpath(f'{path_to_elem}{path_to_salary}')[0].encode('ascii', 'ignore')
         if not name:
             """
             Если имя компании не найдено по стандартному пути, то это значит, что вакансия просматривается и имя находится
@@ -86,7 +93,7 @@ class MyHHParser:
         }
         return vacancy
 
-    def get_vacs_from_page(self):
+    def get_vacs_from_page(self) -> list:  # Должна возвращать список словарей с вакансиями на странице
         response = self.get_response(self.url, headers={'user-agent': self.user_agent})  # Получение ответа
         html_t = self.get_html(response)  # Получение html разметки в виде текста
         p_tree = self.get_tree(html_t)  # Создание дерева для парсинга
@@ -106,5 +113,5 @@ class MyHHParser:
 
 if __name__ == '__main__':
     my_vk_api = api_vk.MyVkApi(os.getenv('VK_API_TOKEN'))  # Авторизация бота в api через токен
-    p = MyHHParser('https://krasnodar.hh.ru/search/vacancy?text=python+junior&area=53', 10, my_vk_api)
+    p = MyHHParser('https://krasnodar.hh.ru/search/vacancy?text=python&area=53', 10, my_vk_api)
     p.get_vacs_from_page()
