@@ -2,9 +2,8 @@ import requests.models
 import lxml.html
 from requests import get
 from time import sleep
-"""
-User-agent - необходимый в запросе заголовок для работы парсера
-"""
+
+# User-agent - необходимый в запросе заголовок для работы парсера
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
 
 
