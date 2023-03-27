@@ -7,6 +7,9 @@ vk_token = os.getenv('VK_API_TOKEN')
 
 
 class MyVkApi:
+    """
+    Класс, упрощающий работу с vk_api.
+    """
     def __init__(self, token):
         self.vk = vk_api.VkApi(token=token).get_api()
 

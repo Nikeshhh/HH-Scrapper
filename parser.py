@@ -36,13 +36,13 @@ class MyHHParser:
         path_to_num = '//*[@id="HH-React-Root"]/div/div[3]/div[1]/div/div[1]/div[1]/div/h1/text()[1]'
         return p_tree.xpath(path_to_num)[0]
 
-    def get_cycle(self):
+    def get_cycle(self):  # Бесконечный цикл работы бота
         while True:
-            response = self.get_response(self.url, headers={'user-agent': self.user_agent})
-            html_t = self.get_html(response)
-            tree = self.get_tree(html_t)
-            self.vk.send_message(self.get_results_number(tree))
-            sleep(self.delay)
+            response = self.get_response(self.url, headers={'user-agent': self.user_agent})  # Получение ответа
+            html_t = self.get_html(response)  # Получение html разметки в виде текста
+            tree = self.get_tree(html_t)  # Создание дерева для парсинга
+            self.vk.send_message(self.get_results_number(tree))  # Парсинг нужного элемента и отправление ответа в сообщении
+            sleep(self.delay)  # Задержка между запросами парсера
 
 
 if __name__ == '__main__':
