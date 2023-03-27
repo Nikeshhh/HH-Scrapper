@@ -47,16 +47,19 @@ class MyHHParser:
         salary = p_tree.xpath(f'{path_to_elem}{path_to_salary}')
         if not salary:
             salary = p_tree.xpath(f'{path_to_elem}{alt_path_to_salary}')
+        if salary != [] and salary[0].startswith('Сейчас'):
+            salary = []
+        salary = ' '.join(list(map(lambda s: s.replace('\u202f', ''), salary)))
         return salary
 
-    def get_vacancy_info(self, vac_id: int, p_tree: lxml.html.HtmlElement) -> list:
+    def get_vacancy_info(self, vac_id: int, p_tree: lxml.html.HtmlElement) -> dict:
         path_to_elem = '//*[@id="a11y-main-content"]/div' + f'[{vac_id}]'
+        if not p_tree.xpath(path_to_elem):
+            return
         path_to_vac_name = '/div/div[1]/div[1]/div[1]/h3/span/a/text()'
         path_to_vac_if_online = '/div/div[1]/div[1]/div[3]/h3/span/a/text()'
-        path_to_salary = '/div/div[1]/div/div[3]/span/text()'
         path_to_employer = '/div/div[1]/div[1]/div[2]/div[1]/div[1]/div/div[1]/a/text()'
         path_to_employer_if_online = '/div/div[1]/div/div[4]/div/div[1]/div/div[1]/a/text()'
-
         name = p_tree.xpath(f'{path_to_elem}{path_to_vac_name}')
         salary = self.get_salary(vac_id, p_tree)
         employer = p_tree.xpath(f'{path_to_elem}{path_to_employer}')
@@ -77,6 +80,7 @@ class MyHHParser:
             # TODO: Разобраться с парсингом названия работодателя
             for i in range(3, 4):
                 employer.extend(p_tree.xpath(f'{path_to_elem}{path_to_employer_if_online}[{i}]'))
+            employer = list(map(lambda s: s.replace('\xa0', ''), employer))
             employer = ' '.join(employer)
         else:
             # Если вакансия не просматривается, все находится по стандартным путям,
@@ -84,6 +88,7 @@ class MyHHParser:
 
             # Соответственно достаем строки из результатов парсинга
             name = name[0]
+            employer = list(map(lambda s: s.replace('\xa0', ''), employer))
             employer = employer[0]
         # Формируем словарь с необходимой информацией
         vacancy = {
@@ -97,21 +102,34 @@ class MyHHParser:
         response = self.get_response(self.url, headers={'user-agent': self.user_agent})  # Получение ответа
         html_t = self.get_html(response)  # Получение html разметки в виде текста
         p_tree = self.get_tree(html_t)  # Создание дерева для парсинга
-        for i in range(2, 30):
-            print(self.get_vacancy_info(i, p_tree))
+        i = 2
+        vac = self.get_vacancy_info(i, p_tree)
+        result = []
+        while vac is not None:
+            vac = self.get_vacancy_info(i, p_tree)
+            result.append(vac)
+            i += 1
+        return result[:-1]
 
+    def create_page_vacs_message(self, vacancies: list) -> str:  # Возвращает отформатированный список вакансий в виде строки
+        response = ''
+        for vac in vacancies:
+            if not vac:
+                continue
+            for value in vac.values():
+                response += f'{value}\n'
+            response += '---------\n'
+        return response
 
     def get_cycle(self):  # Бесконечный цикл работы бота
         while True:
             response = self.get_response(self.url, headers={'user-agent': self.user_agent})  # Получение ответа
             html_t = self.get_html(response)  # Получение html разметки в виде текста
             tree = self.get_tree(html_t)  # Создание дерева для парсинга
-            # self.vk.send_message(self.get_results_number(tree))  # Парсинг нужного элемента и отправление ответа в сообщении
-            print(self.get_results_number(tree))
             sleep(self.delay)  # Задержка между запросами парсера
 
 
 if __name__ == '__main__':
     my_vk_api = api_vk.MyVkApi(os.getenv('VK_API_TOKEN'))  # Авторизация бота в api через токен
     p = MyHHParser('https://krasnodar.hh.ru/search/vacancy?text=python&area=53', 10, my_vk_api)
-    p.get_vacs_from_page()
+    print(p.create_page_vacs_message(p.get_vacs_from_page()))
