@@ -2,6 +2,9 @@ import requests.models
 import lxml.html
 from requests import get
 from time import sleep
+"""
+User-agent - необходимый в запросе заголовок для работы парсера
+"""
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
 
 
@@ -41,8 +44,6 @@ class MyHHParser:
             sleep(self.delay)
 
 
-p = MyHHParser('https://krasnodar.hh.ru/search/vacancy?text=python+junior&area=53', 10)
-p.get_cycle()
-
-
-
+if __name__ == '__main__':
+    p = MyHHParser('https://krasnodar.hh.ru/search/vacancy?text=python+junior&area=53', 10)
+    p.get_cycle()
